@@ -8,18 +8,17 @@ from Utils import map
 from Utils import astar
 
 if __name__ == '__main__':
-    map_len = 10
-    map_bre = 10
-    thresh = 0.1
+    map_len = 1000
+    map_bre = 1000
+    thresh = 1
     flag = True
     step = 1
-    radius = 0.105
-    w_dia = 0.066
-    clearance = 0
+    radius = 3.8
+    w_dia = 35.4
     validPoints = set()
 
-    print('Please not all inputs must in meters and degrees respectively\n\n')
-    clearance = input('Input the clearance in m (0 - 0.25m):\n')
+    print('\nPlease not all inputs must in mm and degrees respectively')
+    clearance = input('Input the clearance (0 - 250mm):\n')
     clearance = int(clearance)
     if clearance < 0:
         flag = False
@@ -45,7 +44,7 @@ if __name__ == '__main__':
             print('Not a valid point, please try again...')
 
     if flag:
-        rpm = input('Input two possible wheel RPM\'s in format: rpm1, rpm2')
+        rpm = input('Input two possible wheel RPM\'s in format: rpm1, rpm2\n')
         rpm = (int(rpm.split(',')[0]), int(rpm.split(',')[1]))
 
     if flag:
@@ -53,12 +52,13 @@ if __name__ == '__main__':
         print(start)
         print(goal)
         reached, parent_map, closed, pointsToPlot = astar.astar(
-            start, goal, validPoints, clearance, step, thresh, rpm)
+            start, goal, validPoints, clearance, step, thresh, rpm, radius,
+            w_dia)
         if reached:
             print('reached')
-            path = astar.getPath(parent_map, start, goal, closed, pointsToPlot)
+            path = astar.getPath(parent_map, start, goal, closed)
             print(path)
             astar.animate(map_len, map_bre, validPoints,
-                          closed, path, parent_map)
+                          closed, path, parent_map, pointsToPlot)
         else:
             print('the point cannot be reached')

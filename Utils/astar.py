@@ -26,8 +26,8 @@ def getCost(curr_node, move, step, radius, w_dia, pointsToPlot):
         pointsToPlot.append((Xn, Yn))
         Delta_Xn = 0.5 * radius * (UL + UR) * math.cos(Th) * dt
         Delta_Yn = 0.5 * radius * (UL + UR) * math.sin(Th) * dt
-        Xn += Delta_Xn
-        Yn += Delta_Yn
+        Xn = int(Xn + Delta_Xn)
+        Yn = int(Yn + Delta_Yn)
         Th += (radius / w_dia) * (UR - UL) * dt
         D = D + math.sqrt(math.pow((0.5*radius*(UL + UR)
                                     * math.cos(Th)*dt), 2)+math.pow(
@@ -55,7 +55,6 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia,
     adjNodes : list of adjacent nodes with cost from parent node
     """
     adjNodes = []
-    flag = True
     for move in moves:
         # Checking if the point is valid
         new_node, cost, pointsToPlot = getCost(
@@ -64,6 +63,7 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia,
         y = new_node[1]
         angle = new_node[2]
         if (x, y) in validPoints:
+            flag = True
             # Checking for clearance
             for i in range(clearance):
                 if not (int(x + (i * np.cos(np.radians(angle)))),
@@ -141,7 +141,7 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
     parent_map : dict of nodes mapped to parent node_cost
     closed : list of all the explored nodes
     """
-    closed = set()
+    closed = []
     queue = []
     node_cost = {}
     parent_map = {}
@@ -162,7 +162,7 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
     pointsToPlot = []
     while not reached and queue:
         curr_cost, curr_node = heap.heappop(queue)
-        closed.add(curr_node[0:2])
+        closed.append(curr_node[0:2])
         adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves,
                                radius, w_dia, pointsToPlot)
         for new_node, cost in adjNodes:
@@ -225,20 +225,20 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map,
     parent_map : dict of nodes mapped to parent node_cost
     """
     map_frame = np.zeros((map_bre + 1, map_len + 1, 3))
-    resize = (800, 500)
+    resize = (800, 800)
     for point in validPoints:
         map_frame[map_bre - point[1], point[0]] = [255, 255, 255]
     cv2.circle(map_frame, (path[-1][0], map_bre
                - path[-1][1]), 2, [0, 0, 255], -1)
     cv2.circle(map_frame, (path[0][0], map_bre
                - path[0][1]), 2, [0, 255, 0], -1)
-    for i in range(1, len(pointsToPlot)):
-        if(point == path[0]):
-            continue
-        cv2.circle(map_frame, (point[0], map_bre
-                   - point[1]), 1, [255, 0, 0], -1)
-        cv2.imshow('map_frame', cv2.resize(map_frame, resize))
-        cv2.waitKey(1)
+    # for i in range(1, len(pointsToPlot)):
+    #     if(point == path[0]):
+    #         continue
+    #     cv2.circle(map_frame, (point[0], map_bre
+    #                - point[1]), 5, [255, 0, 0], -1)
+    #     cv2.imshow('map_frame', cv2.resize(map_frame, resize))
+    #     cv2.waitKey(1)
     for point in path:
         if(point == path[0]):
             continue
