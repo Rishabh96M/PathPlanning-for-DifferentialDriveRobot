@@ -145,6 +145,8 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
     heap.heappush(queue, (0, start))
     while not reached and queue:
         curr_cost, curr_node = heap.heappop(queue)
+        if curr_node[0:2] in closed:
+            continue
         closed.append(curr_node[0:2])
         adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves,
                                radius, w_dia)
@@ -207,21 +209,21 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map):
     parent_map : dict of nodes mapped to parent node_cost
     """
     map_frame = np.zeros((map_bre + 1, map_len + 1, 3))
-    resize = (400, 400)
+    resize = (800, 800)
     for point in validPoints:
         map_frame[map_bre - point[1], point[0]] = [255, 255, 255]
     cv2.circle(map_frame, (path[-1][0], map_bre
                - path[-1][1]), 2, [0, 0, 255], -1)
     cv2.circle(map_frame, (path[0][0], map_bre
                - path[0][1]), 2, [0, 255, 0], -1)
-    for point in closed:
-        if(point == path[0]):
-            continue
-        parent = parent_map[point]
-        cv2.line(map_frame, (point[0], map_bre - point[1]),
-                 (parent[0], map_bre - parent[1]), [255, 0, 0], 1)
-        cv2.imshow('map_frame', cv2.resize(map_frame, resize))
-        cv2.waitKey(1)
+    # for point in closed:
+    #     if(point == path[0]):
+    #         continue
+    #     parent = parent_map[point]
+    #     cv2.line(map_frame, (point[0], map_bre - point[1]),
+    #              (parent[0], map_bre - parent[1]), [255, 0, 0], 1)
+    #     cv2.imshow('map_frame', cv2.resize(map_frame, resize))
+    #     cv2.waitKey(1)
     for point in path:
         if(point == path[0]):
             continue

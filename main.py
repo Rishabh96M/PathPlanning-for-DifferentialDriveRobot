@@ -10,7 +10,7 @@ from Utils import astar
 if __name__ == '__main__':
     map_len = 100
     map_bre = 100
-    thresh = 5
+    thresh = 10
     flag = True
     step = 1
     radius = 0.38
