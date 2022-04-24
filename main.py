@@ -10,7 +10,7 @@ from Utils import astar
 if __name__ == '__main__':
     map_len = 10
     map_bre = 10
-    thresh = 1.5
+    thresh = 0.1
     flag = True
     step = 1
     radius = 0.105
@@ -52,11 +52,11 @@ if __name__ == '__main__':
         print('starting')
         print(start)
         print(goal)
-        reached, parent_map, closed = astar.astar(
+        reached, parent_map, closed, pointsToPlot = astar.astar(
             start, goal, validPoints, clearance, step, thresh, rpm)
         if reached:
             print('reached')
-            path = astar.getPath(parent_map, start, goal, closed)
+            path = astar.getPath(parent_map, start, goal, closed, pointsToPlot)
             print(path)
             astar.animate(map_len, map_bre, validPoints,
                           closed, path, parent_map)

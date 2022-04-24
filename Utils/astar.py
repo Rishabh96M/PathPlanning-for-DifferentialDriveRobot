@@ -119,7 +119,7 @@ def updateNode(new_node, curr_node, node_cost, queue, parent_map, cost, goal,
 
 
 def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
-w_dia):
+          w_dia):
     """
     Definition
     ---
@@ -159,10 +159,12 @@ w_dia):
 
     node_cost[start] = 0
     heap.heappush(queue, (0, start))
+    pointsToPlot = []
     while not reached and queue:
         curr_cost, curr_node = heap.heappop(queue)
         closed.add(curr_node[0:2])
-        adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves)
+        adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves,
+                               radius, w_dia, pointsToPlot)
         for new_node, cost in adjNodes:
             if new_node[0:2] in closed:
                 continue
@@ -174,7 +176,7 @@ w_dia):
                 closed.append(new_node[0:2])
                 reached = True
                 break
-    return reached, parent_map, closed
+    return reached, parent_map, closed, pointsToPlot
 
 
 def getPath(parent_map, start, goal, closed):
@@ -205,7 +207,8 @@ def getPath(parent_map, start, goal, closed):
     return path[::-1]
 
 
-def animate(map_len, map_bre, validPoints, closed, path, parent_map):
+def animate(map_len, map_bre, validPoints, closed, path, parent_map,
+            pointsToPlot):
     """
     Definition
     ---
@@ -229,12 +232,11 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map):
                - path[-1][1]), 2, [0, 0, 255], -1)
     cv2.circle(map_frame, (path[0][0], map_bre
                - path[0][1]), 2, [0, 255, 0], -1)
-    for point in closed:
+    for i in range(1, len(pointsToPlot)):
         if(point == path[0]):
             continue
-        parent = parent_map[point]
-        cv2.line(map_frame, (point[0], map_bre - point[1]),
-                 (parent[0], map_bre - parent[1]), [255, 0, 0], 2)
+        cv2.circle(map_frame, (point[0], map_bre
+                   - point[1]), 1, [255, 0, 0], -1)
         cv2.imshow('map_frame', cv2.resize(map_frame, resize))
         cv2.waitKey(1)
     for point in path:
