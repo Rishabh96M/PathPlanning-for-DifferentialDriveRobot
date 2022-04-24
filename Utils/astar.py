@@ -11,7 +11,7 @@ import math
 import cv2
 
 
-def getCost(curr_node, move, step, radius, w_dia, pointsToPlot):
+def getCost(curr_node, move, step, radius, w_dia):
     t = 0
     dt = 0.1
     Xn = curr_node[0]
@@ -23,20 +23,18 @@ def getCost(curr_node, move, step, radius, w_dia, pointsToPlot):
 
     while t < step:
         t = t + dt
-        pointsToPlot.append((Xn, Yn))
         Delta_Xn = 0.5 * radius * (UL + UR) * math.cos(Th) * dt
         Delta_Yn = 0.5 * radius * (UL + UR) * math.sin(Th) * dt
-        Xn = int(Xn + Delta_Xn)
-        Yn = int(Yn + Delta_Yn)
+        Xn = Xn + Delta_Xn
+        Yn = Yn + Delta_Yn
         Th += (radius / w_dia) * (UR - UL) * dt
         D = D + math.sqrt(math.pow((0.5*radius*(UL + UR)
                                     * math.cos(Th)*dt), 2)+math.pow(
                                     (0.5*radius*(UL + UR)*math.sin(Th)*dt), 2))
-    return (Xn, Yn, Th), D, pointsToPlot
+    return (int(Xn), int(Yn), Th), D
 
 
-def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia,
-                pointsToPlot):
+def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia):
     """
     Definition
     ---
@@ -57,8 +55,8 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia,
     adjNodes = []
     for move in moves:
         # Checking if the point is valid
-        new_node, cost, pointsToPlot = getCost(
-            curr_node, move, step, radius, w_dia, pointsToPlot)
+        new_node, cost = getCost(
+            curr_node, move, step, radius, w_dia)
         x = new_node[0]
         y = new_node[1]
         if (x, y) in validPoints:
@@ -94,8 +92,8 @@ def updateNode(new_node, curr_node, node_cost, queue, parent_map, cost, goal,
     dist = abs(np.linalg.norm(np.asarray(
         new_node[0:2]) - np.asarray(goal[0:2])))
     new_cost = node_cost[curr_node] + cost + dist
-    temp_cost = node_cost.get(new_node)
 
+    temp_cost = node_cost.get(new_node)
     if not temp_cost or (temp_cost > new_cost):
         node_cost[new_node] = new_cost
         parent_map[new_node[0:2]] = curr_node[0:2]
@@ -138,8 +136,6 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
     moves = [(rpm[0], 0), (0, rpm[0]), (rpm[0], rpm[0]), (rpm[1], 0),
              (0, rpm[1]), (rpm[1], rpm[0]), (rpm[0], rpm[1]), (rpm[1], rpm[1])]
 
-    print(abs(np.linalg.norm(np.asarray(goal[0:2])
-                             - np.asarray(start[0:2]))) < thresh)
     if abs(np.linalg.norm(np.asarray(goal[0:2])
                           - np.asarray(start[0:2]))) < thresh:
         reached = True
@@ -147,24 +143,23 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
 
     node_cost[start] = 0
     heap.heappush(queue, (0, start))
-    pointsToPlot = []
     while not reached and queue:
         curr_cost, curr_node = heap.heappop(queue)
         closed.append(curr_node[0:2])
         adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves,
-                               radius, w_dia, pointsToPlot)
+                               radius, w_dia)
         for new_node, cost in adjNodes:
             if new_node[0:2] in closed:
                 continue
-            print('checking for node: ', new_node[0:2])
             flag, node_cost, queue, parent_map = updateNode(
                 new_node, curr_node, node_cost, queue, parent_map, cost,
                 goal, thresh)
+            print('checking for node: ', new_node[0:2])
             if flag:
                 closed.append(new_node[0:2])
                 reached = True
                 break
-    return reached, parent_map, closed, pointsToPlot
+    return reached, parent_map, closed
 
 
 def getPath(parent_map, start, goal, closed):
@@ -195,8 +190,7 @@ def getPath(parent_map, start, goal, closed):
     return path[::-1]
 
 
-def animate(map_len, map_bre, validPoints, closed, path, parent_map,
-            pointsToPlot):
+def animate(map_len, map_bre, validPoints, closed, path, parent_map):
     """
     Definition
     ---
@@ -213,18 +207,19 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map,
     parent_map : dict of nodes mapped to parent node_cost
     """
     map_frame = np.zeros((map_bre + 1, map_len + 1, 3))
-    resize = (800, 800)
+    resize = (400, 400)
     for point in validPoints:
         map_frame[map_bre - point[1], point[0]] = [255, 255, 255]
     cv2.circle(map_frame, (path[-1][0], map_bre
-               - path[-1][1]), 5, [0, 0, 255], -1)
+               - path[-1][1]), 2, [0, 0, 255], -1)
     cv2.circle(map_frame, (path[0][0], map_bre
-               - path[0][1]), 5, [0, 255, 0], -1)
-    for i in range(1, len(pointsToPlot)):
+               - path[0][1]), 2, [0, 255, 0], -1)
+    for point in closed:
         if(point == path[0]):
             continue
-        cv2.circle(map_frame, (point[0], map_bre
-                   - point[1]), 5, [255, 0, 0], -1)
+        parent = parent_map[point]
+        cv2.line(map_frame, (point[0], map_bre - point[1]),
+                 (parent[0], map_bre - parent[1]), [255, 0, 0], 1)
         cv2.imshow('map_frame', cv2.resize(map_frame, resize))
         cv2.waitKey(1)
     for point in path:
@@ -232,7 +227,7 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map,
             continue
         parent = parent_map[point]
         cv2.line(map_frame, (point[0], map_bre - point[1]),
-                 (parent[0], map_bre - parent[1]), [0, 255, 0], 2)
+                 (parent[0], map_bre - parent[1]), [0, 255, 0], 1)
         cv2.imshow('map_frame', cv2.resize(map_frame, resize))
         cv2.waitKey(1)
     print('done, press any key to exit..')

@@ -6,7 +6,7 @@
 # Description: definig the given map
 
 
-def listOfValidPoints(radius):
+def listOfValidPoints(radius, clearance):
     """
     Definition
     ---
@@ -19,33 +19,33 @@ def listOfValidPoints(radius):
     map_len = 100
     map_bre = 100
     validPoints = set()
-
+    d = radius + clearance
     # Defining Circle 1
     xc1 = 20
     yc1 = 20
-    rc1 = 10 + radius
+    rc1 = 10 + d
 
     # Defining Circle 2
     xc2 = 20
     yc2 = 80
-    rc2 = 10 + radius
+    rc2 = 10 + d
 
     # Defining Square and Rectangle 1
-    x1 = 2.5 - radius
-    x2 = 17.5 + radius
-    x3 = 37.5 - radius
-    x4 = 62.5 + radius
-    y1 = 42.5 - radius
-    y2 = 57.5 + radius
+    x1 = 2.5 - d
+    x2 = 17.5 + d
+    x3 = 37.5 - d
+    x4 = 62.5 + d
+    y1 = 42.5 - d
+    y2 = 57.5 + d
 
     # Defining Rectangle 2
-    x5 = 72.5 - radius
-    x6 = 87.5 + radius
-    y5 = 20.0 - radius
-    y6 = 40.0 + radius
+    x5 = 72.5 - d
+    x6 = 87.5 + d
+    y6 = 40.0 + d
+    y5 = 20.0 - d
 
-    for x in range(int(radius), map_len + 1 - int(radius)):
-        for y in range(int(radius), map_bre + 1 - int(radius)):
+    for x in range(int(d), map_len + 1 - int(d)):
+        for y in range(int(d), map_bre + 1 - int(d)):
             if ((x - xc1)**2 + (y - yc1)**2) <= rc1**2:
                 continue
             if ((x - xc2)**2 + (y - yc2)**2) <= rc2**2:
@@ -59,26 +59,3 @@ def listOfValidPoints(radius):
                 continue
             validPoints.add((x, y))
     return validPoints
-
-
-def isPointValid(point, validPoints, clearance):
-    """
-    Definition
-    ---
-    Method to check if point is valid and clear of obstacles
-
-    Parameters
-    ---
-    point : node of intrest
-    validPoints : set of all valid points
-    clearance : minimum distance required from obstacles
-
-    Returns
-    ---
-    bool : True if point is valid, False othervise
-    """
-    for i in range(-clearance, clearance):
-        for j in range(-clearance, clearance):
-            if not (point[0] + i, point[1] + j) in validPoints:
-                return False
-    return True
