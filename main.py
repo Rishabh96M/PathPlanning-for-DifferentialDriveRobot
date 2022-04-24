@@ -26,7 +26,7 @@ if __name__ == '__main__':
         print('Invalid input, please try again...')
 
     if flag:
-        validPoints = map.listOfValidPoints(map_len, map_bre, radius)
+        validPoints = map.listOfValidPoints(radius)
 
     if flag:
         start = input('Input Staring Position in format: x,y,th\n')

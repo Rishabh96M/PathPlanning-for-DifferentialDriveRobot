@@ -6,7 +6,7 @@
 # Description: definig the given map
 
 
-def listOfValidPoints():
+def listOfValidPoints(radius):
     """
     Definition
     ---
@@ -18,7 +18,6 @@ def listOfValidPoints():
     """
     map_len = 10
     map_bre = 10
-    radius = 1
     validPoints = set()
 
     # Defining Circle 1
@@ -45,8 +44,8 @@ def listOfValidPoints():
     y5 = 2 - radius
     y6 = 4 + radius
 
-    for x in range(radius, map_len + 1 - radius):
-        for y in range(radius, map_bre + 1 - radius):
+    for x in range(int(radius), map_len + 1 - int(radius)):
+        for y in range(int(radius), map_bre + 1 - int(radius)):
             if ((x - xc1)**2 + (y - yc1)**2) <= rc1**2:
                 continue
             if ((x - xc2)**2 + (y - yc2)**2) <= rc2**2:
