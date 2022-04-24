@@ -61,20 +61,8 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia,
             curr_node, move, step, radius, w_dia, pointsToPlot)
         x = new_node[0]
         y = new_node[1]
-        angle = new_node[2]
         if (x, y) in validPoints:
-            flag = True
-            # Checking for clearance
-            for i in range(clearance):
-                if not (int(x + (i * np.cos(np.radians(angle)))),
-                        int(y + (i * np.sin(np.radians(angle))))) \
-                         in validPoints:
-                    flag = False
-                    break
-                if not flag:
-                    break
-            if flag:
-                adjNodes.append((new_node, cost))
+            adjNodes.append((new_node, cost))
     return adjNodes
 
 
@@ -229,16 +217,16 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map,
     for point in validPoints:
         map_frame[map_bre - point[1], point[0]] = [255, 255, 255]
     cv2.circle(map_frame, (path[-1][0], map_bre
-               - path[-1][1]), 2, [0, 0, 255], -1)
+               - path[-1][1]), 5, [0, 0, 255], -1)
     cv2.circle(map_frame, (path[0][0], map_bre
-               - path[0][1]), 2, [0, 255, 0], -1)
-    # for i in range(1, len(pointsToPlot)):
-    #     if(point == path[0]):
-    #         continue
-    #     cv2.circle(map_frame, (point[0], map_bre
-    #                - point[1]), 5, [255, 0, 0], -1)
-    #     cv2.imshow('map_frame', cv2.resize(map_frame, resize))
-    #     cv2.waitKey(1)
+               - path[0][1]), 5, [0, 255, 0], -1)
+    for i in range(1, len(pointsToPlot)):
+        if(point == path[0]):
+            continue
+        cv2.circle(map_frame, (point[0], map_bre
+                   - point[1]), 5, [255, 0, 0], -1)
+        cv2.imshow('map_frame', cv2.resize(map_frame, resize))
+        cv2.waitKey(1)
     for point in path:
         if(point == path[0]):
             continue
