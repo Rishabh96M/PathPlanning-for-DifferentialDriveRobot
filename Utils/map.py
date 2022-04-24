@@ -16,33 +16,33 @@ def listOfValidPoints(radius, clearance):
     ---
     validPoints : set of all the valid points
     """
-    map_len = 100
-    map_bre = 100
+    map_len = 1000
+    map_bre = 1000
     validPoints = set()
     d = radius + clearance
     # Defining Circle 1
-    xc1 = 20
-    yc1 = 20
-    rc1 = 10 + d
+    xc1 = 200
+    yc1 = 200
+    rc1 = 100 + d
 
     # Defining Circle 2
-    xc2 = 20
-    yc2 = 80
-    rc2 = 10 + d
+    xc2 = 200
+    yc2 = 800
+    rc2 = 100 + d
 
     # Defining Square and Rectangle 1
-    x1 = 2.5 - d
-    x2 = 17.5 + d
-    x3 = 37.5 - d
-    x4 = 62.5 + d
-    y1 = 42.5 - d
-    y2 = 57.5 + d
+    x1 = 25 - d
+    x2 = 175 + d
+    x3 = 375 - d
+    x4 = 625 + d
+    y1 = 425 - d
+    y2 = 575 + d
 
     # Defining Rectangle 2
-    x5 = 72.5 - d
-    x6 = 87.5 + d
-    y6 = 40.0 + d
-    y5 = 20.0 - d
+    x5 = 725 - d
+    x6 = 875 + d
+    y6 = 400 + d
+    y5 = 200 - d
 
     for x in range(int(d), map_len + 1 - int(d)):
         for y in range(int(d), map_bre + 1 - int(d)):

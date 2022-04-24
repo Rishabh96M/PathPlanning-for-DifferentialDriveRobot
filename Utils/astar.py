@@ -216,14 +216,14 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map):
                - path[-1][1]), 2, [0, 0, 255], -1)
     cv2.circle(map_frame, (path[0][0], map_bre
                - path[0][1]), 2, [0, 255, 0], -1)
-    # for point in closed:
-    #     if(point == path[0]):
-    #         continue
-    #     parent = parent_map[point]
-    #     cv2.line(map_frame, (point[0], map_bre - point[1]),
-    #              (parent[0], map_bre - parent[1]), [255, 0, 0], 1)
-    #     cv2.imshow('map_frame', cv2.resize(map_frame, resize))
-    #     cv2.waitKey(1)
+    for point in closed:
+        if(point == path[0]):
+            continue
+        parent = parent_map[point]
+        cv2.line(map_frame, (point[0], map_bre - point[1]),
+                 (parent[0], map_bre - parent[1]), [255, 0, 0], 1)
+        cv2.imshow('map_frame', cv2.resize(map_frame, resize))
+        cv2.waitKey(1)
     for point in path:
         if(point == path[0]):
             continue

@@ -8,13 +8,13 @@ from Utils import map
 from Utils import astar
 
 if __name__ == '__main__':
-    map_len = 100
-    map_bre = 100
-    thresh = 10
+    map_len = 1000
+    map_bre = 1000
+    thresh = 5
     flag = True
     step = 1
-    radius = 0.38
-    w_dia = 3.54
+    radius = 3.8
+    w_dia = 35.4
     validPoints = set()
 
     print('\nPlease not all inputs must in mm and degrees respectively')
