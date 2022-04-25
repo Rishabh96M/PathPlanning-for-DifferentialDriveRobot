@@ -235,11 +235,9 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map, moves,
             for i in range(1, len(Xs)):
                 cv2.line(map_frame, (Xs[i], map_bre - Ys[i]),
                          (Xs[i-1], map_bre - Ys[i-1]), [255, 0, 0], 2)
-        cv2.imshow('map_frame', cv2.resize(map_frame, resize))
-        cv2.waitKey(1)
+        # cv2.imshow('map_frame', cv2.resize(map_frame, resize))
+        # cv2.waitKey(1)
     for point, move in path:
-        if(point == path[0][0]):
-            continue
         Xs, Ys = curve_points(point, move, radius,
                               w_dia, step, map_frame, validPoints)
         for i in range(1, len(Xs)):

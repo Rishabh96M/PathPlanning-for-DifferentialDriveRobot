@@ -6,6 +6,7 @@
 
 from Utils import map
 from Utils import astar
+from Utils import ros_talker
 
 if __name__ == '__main__':
     map_len = 1000
@@ -36,7 +37,7 @@ if __name__ == '__main__':
             print('Not a valid point, please try again...')
 
     if flag:
-        goal = input('Input Staring Position in format: x,y\n')
+        goal = input('Input Goal Position in format: x,y\n')
         goal = (int(goal.split(',')[0]), int(
             goal.split(',')[1]))
         if goal not in validPoints:
@@ -61,5 +62,6 @@ if __name__ == '__main__':
             print(path)
             astar.animate(map_len, map_bre, validPoints,
                           closed, path, parent_map, moves, w_dia, radius, step)
+            ros_talker.send_vel(path, radius, w_dia, step)
         else:
             print('the point cannot be reached')
