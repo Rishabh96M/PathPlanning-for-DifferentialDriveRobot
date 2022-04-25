@@ -36,3 +36,5 @@ rpm2 : 20<br>
 **Videos** folder contains the output for two test cases<br>
 test1 inputs: clearance=0; start=100,100,0; goal=800,800; rpm=10,20<br>
 test2 inputs: clearance=0; start=100,100,0; goal=300,500; rpm=10,20<br>
+
+P.S: Try to run the videos on VLC Media player, and make sure it is completely zoomed out (The video contains two screens)
