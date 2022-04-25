@@ -11,7 +11,27 @@ import math
 import cv2
 
 
-def getCost(curr_node, move, step, radius, w_dia, validPoints):
+def getCost(curr_node, move, step, radius, w_dist, validPoints):
+    """
+    Definition
+    ---
+    Method to generate adjacent nodes for a given node and action along with
+    the cost
+
+    Parameters
+    ---
+    curr_node : node of intrest
+    move : current action
+    step : step size for each movement
+    radius : radius of the robot
+    w_dist : distance between the wheels of the robot
+    validPoints : set of all valid points in the map
+
+    Returns
+    ---
+    new_node : generated node based on action from current node
+    D : cost to get to new node from current node
+    """
     t = 0
     dt = 0.1
     Xn = curr_node[0]
@@ -29,7 +49,7 @@ def getCost(curr_node, move, step, radius, w_dia, validPoints):
         Yn = Yn + Delta_Yn
         if (round(Xn), round(Yn)) not in validPoints:
             return (-1, -1, -1), -1
-        Th += (radius / w_dia) * (UR - UL) * dt
+        Th += (radius / w_dist) * (UR - UL) * dt
         D = D + math.sqrt(math.pow((0.5*radius*(UL + UR)
                                     * math.cos(Th)*dt), 2)+math.pow(
                                     (0.5*radius*(UL + UR)*math.sin(Th)*dt), 2))
@@ -37,7 +57,7 @@ def getCost(curr_node, move, step, radius, w_dia, validPoints):
     return (round(Xn), round(Yn), round(Th)), D
 
 
-def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia):
+def getAdjNodes(curr_node, validPoints, step, moves, radius, w_dist):
     """
     Definition
     ---
@@ -46,10 +66,11 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia):
     Parameters
     ---
     curr_node : node of intrest
-    validPoints : list of all valid points
-    clearance : minimum distance required from obstacles
+    validPoints : set of all valid points in the map
     step : step size for each movement
     moves : action space of robot
+    radius : radius of the robot
+    w_dist : distance between the wheels of the robot
 
     Returns
     ---
@@ -59,7 +80,7 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia):
     for move in moves:
         # Checking if the point is valid
         new_node, cost = getCost(
-            curr_node, move, step, radius, w_dia, validPoints)
+            curr_node, move, step, radius, w_dist, validPoints)
         x = new_node[0]
         y = new_node[1]
         if (x, y) in validPoints:
@@ -84,6 +105,7 @@ def updateNode(new_node, curr_node, node_cost, queue, parent_map, cost, goal,
     cost : cost to get to new node from parent node
     goal : goal node
     thresh : Threshold from goal point
+    new_move : action taken to reach new node from current node
 
     Returns
     ---
@@ -106,8 +128,7 @@ def updateNode(new_node, curr_node, node_cost, queue, parent_map, cost, goal,
     return False, node_cost, queue, parent_map
 
 
-def astar(start, goal, validPoints, clearance, step, thresh, moves, radius,
-          w_dia):
+def astar(start, goal, validPoints, step, thresh, moves, radius, w_dist):
     """
     Definition
     ---
@@ -117,11 +138,12 @@ def astar(start, goal, validPoints, clearance, step, thresh, moves, radius,
     ---
     start : starting node
     goal : goal node
-    validPoints : list of all valid points
-    clearance : minimum distance required from obstacles
+    validPoints : list of all valid points in the map
     step : step size for each movement
     thresh : Threshold from goal point
-    rpm: two possible wheel rpm's
+    moves: action space of the robot
+    radius : radius of the robot
+    w_dist : distance between the wheels of the robot
 
     Returns
     ---
@@ -149,8 +171,8 @@ def astar(start, goal, validPoints, clearance, step, thresh, moves, radius,
             continue
         closed.append(curr_node)
         thresholded.add((curr_node[0]//thresh, curr_node[1]//thresh))
-        adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves,
-                               radius, w_dia)
+        adjNodes = getAdjNodes(curr_node, validPoints, step, moves,
+                               radius, w_dist)
         for new_node, new_move, cost in adjNodes:
             if visitedNode(thresholded, new_node, thresh):
                 continue
@@ -167,6 +189,21 @@ def astar(start, goal, validPoints, clearance, step, thresh, moves, radius,
 
 
 def visitedNode(thresholded, curr_node, thresh):
+    """
+    Definition
+    ---
+    Method to check if node along with threshold has already been visited
+
+    Parameters
+    ---
+    thresholded : set of all visited nodes after thresholding
+    curr_node : node of interest
+    thresh : threshold value
+
+    Returns
+    ---
+    bool : True if alredy visited, False othervise
+    """
     x = curr_node[0]//thresh
     y = curr_node[1]//thresh
     if (x, y) in thresholded:
@@ -192,17 +229,16 @@ def getPath(parent_map, start, goal, closed):
     path: list of all the points from starting to goal position
     """
     curr_node = closed[-1]
-    path = [(curr_node, [0, 0])]
+    path = [(curr_node, (0, 0))]
     while not curr_node[0:2] == start[0:2]:
         (parent_node, move) = parent_map[curr_node]
         path.append((parent_node, move))
         curr_node = parent_node
-    path.append(((start[0], start[1], 0), [0, 0]))
     return path[::-1]
 
 
 def animate(map_len, map_bre, validPoints, closed, path, parent_map, moves,
-            w_dia, radius, step):
+            w_dist, radius, step):
     """
     Definition
     ---
@@ -213,10 +249,14 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map, moves,
     ---
     map_len : length of map
     map_bre : breadth of map
-    validPoints : list of all valid points
+    validPoints : list of all valid points in the map
     closed : list of all the explored nodes
     path: list of all the points from starting to goal position
     parent_map : dict of nodes mapped to parent node_cost
+    moves: action space of the robot
+    radius : radius of the robot
+    w_dist : distance between the wheels of the robot
+    step : step size of each movement
     """
     map_frame = np.zeros((map_bre + 1, map_len + 1, 3))
     resize = (800, 800)
@@ -231,25 +271,43 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map, moves,
             continue
         for move in moves:
             Xs, Ys = curve_points(point, move, radius,
-                                  w_dia, step, map_frame, validPoints)
+                                  w_dist, step, validPoints)
             for i in range(1, len(Xs)):
                 cv2.line(map_frame, (Xs[i], map_bre - Ys[i]),
                          (Xs[i-1], map_bre - Ys[i-1]), [255, 0, 0], 2)
-        # cv2.imshow('map_frame', cv2.resize(map_frame, resize))
-        # cv2.waitKey(1)
+        cv2.imshow('map_frame', cv2.resize(map_frame, resize))
+        cv2.waitKey(1)
     for point, move in path:
-        Xs, Ys = curve_points(point, move, radius,
-                              w_dia, step, map_frame, validPoints)
+        Xs, Ys = curve_points(point, move, radius, w_dist, step, validPoints)
         for i in range(1, len(Xs)):
             cv2.line(map_frame, (Xs[i], map_bre - Ys[i]),
                      (Xs[i-1], map_bre - Ys[i-1]), [0, 0, 255], 4)
         cv2.imshow('map_frame', cv2.resize(map_frame, resize))
         cv2.waitKey(1)
-    print('done, press any key to exit..')
+    print('Path animation completed')
+    print('press any key to to move turtlebot on ROS gazebo..')
     cv2.waitKey(0)
 
 
-def curve_points(curr_node, move, radius, w_dia, step, map_frame, validPoints):
+def curve_points(curr_node, move, radius, w_dist, step, validPoints):
+    """
+    Definition
+    ---
+    Method to generate points on a curve
+
+    Parameters
+    ---
+    curr_node : node of interest
+    move : current action
+    radius : radius of the robot
+    w_dist : distance between the wheels of the robot
+    step : step size of each movement
+    validPoints : set of all valid points in the map
+
+    Returns
+    ---
+    Xs, Ys: list of all points on curve
+    """
     t = 0
     dt = 0.1
     Xn = curr_node[0]
@@ -267,5 +325,5 @@ def curve_points(curr_node, move, radius, w_dia, step, map_frame, validPoints):
         Yn += 0.5*radius * (UL + UR) * math.sin(Thetan) * dt
         if (round(Xn), round(Yn)) not in validPoints:
             return [], []
-        Thetan += (radius / w_dia) * (UR - UL) * dt
+        Thetan += (radius / w_dist) * (UR - UL) * dt
     return Xs, Ys

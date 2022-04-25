@@ -15,10 +15,15 @@ if __name__ == '__main__':
     flag = True
     step = 1
     radius = 3.8
-    w_dia = 35.4
-    validPoints = set()
+    w_dist = 35.4
 
-    print('\nPlease not all inputs must in cm and degrees respectively')
+    print('\n***********************************************************\n')
+    print('Please not all inputs must in cm and degrees respectively')
+    print('Map dimentions are 1000*1000')
+    print('Ideal values for clearance are 0 to 10')
+    print('Ideal values for rpm1, rpm2 are 10,20')
+    print('\n***********************************************************\n')
+
     clearance = input('Input the clearance (ideal: 0-10):\n')
     clearance = int(clearance)
     if clearance < 0:
@@ -44,24 +49,30 @@ if __name__ == '__main__':
             flag = False
             print('Not a valid point, please try again...')
 
-    rpm = input('Input two possible wheel RPM\'s in format: rpm1, rpm2\n')
-    rpm = (int(rpm.split(',')[0]), int(rpm.split(',')[1]))
-    moves = [(rpm[0], 0), (0, rpm[0]), (rpm[0], rpm[0]), (rpm[1], 0),
-             (0, rpm[1]), (rpm[1], rpm[0]), (rpm[0], rpm[1]), (rpm[1], rpm[1])]
+    if flag:
+        rpm = input('Input two possible wheel RPM\'s in format: rpm1, rpm2\n')
+        rpm = (int(rpm.split(',')[0]), int(rpm.split(',')[1]))
+        moves = [(rpm[0], 0), (0, rpm[0]), (rpm[0], rpm[0]),
+                 (rpm[1], 0), (0, rpm[1]), (rpm[1], rpm[0]),
+                 (rpm[0], rpm[1]), (rpm[1], rpm[1])]
 
     if flag:
         print('starting')
         print(start)
         print(goal)
         reached, parent_map, closed = astar.astar(
-            start, goal, validPoints, clearance, step, thresh, moves, radius,
-            w_dia)
+            start, goal, validPoints, step, thresh, moves, radius,
+            w_dist)
         if reached:
-            print('reached')
+            print('\nreached')
+
             path = astar.getPath(parent_map, start, goal, closed)
-            print(path)
-            astar.animate(map_len, map_bre, validPoints,
-                          closed, path, parent_map, moves, w_dia, radius, step)
-            ros_talker.send_vel(path, radius, w_dia, step)
+            print('Path from goal to end is: ', path)
+
+            astar.animate(map_len, map_bre, validPoints, closed, path,
+                          parent_map, moves, w_dist, radius, step)
+
+            ros_talker.send_vel(path, radius, w_dist, step)
+            print('Simulation completed successfully')
         else:
             print('the point cannot be reached')
