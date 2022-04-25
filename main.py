@@ -19,7 +19,7 @@ if __name__ == '__main__':
     validPoints = set()
 
     print('\nPlease not all inputs must in cm and degrees respectively')
-    clearance = input('Input the clearance (0 - 0.250m):\n')
+    clearance = input('Input the clearance (ideal: 0-10):\n')
     clearance = int(clearance)
     if clearance < 0:
         flag = False
