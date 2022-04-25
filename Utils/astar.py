@@ -11,7 +11,7 @@ import math
 import cv2
 
 
-def getCost(curr_node, move, step, radius, w_dia):
+def getCost(curr_node, move, step, radius, w_dia, validPoints):
     t = 0
     dt = 0.1
     Xn = curr_node[0]
@@ -27,11 +27,14 @@ def getCost(curr_node, move, step, radius, w_dia):
         Delta_Yn = 0.5 * radius * (UL + UR) * math.sin(Th) * dt
         Xn = Xn + Delta_Xn
         Yn = Yn + Delta_Yn
+        if (round(Xn), round(Yn)) not in validPoints:
+            return (-1, -1, -1), -1
         Th += (radius / w_dia) * (UR - UL) * dt
         D = D + math.sqrt(math.pow((0.5*radius*(UL + UR)
                                     * math.cos(Th)*dt), 2)+math.pow(
                                     (0.5*radius*(UL + UR)*math.sin(Th)*dt), 2))
-    return (int(Xn), int(Yn), Th), D
+    Th = 180 * Th / 3.14
+    return (round(Xn), round(Yn), round(Th)), D
 
 
 def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia):
@@ -56,16 +59,16 @@ def getAdjNodes(curr_node, validPoints, clearance, step, moves, radius, w_dia):
     for move in moves:
         # Checking if the point is valid
         new_node, cost = getCost(
-            curr_node, move, step, radius, w_dia)
+            curr_node, move, step, radius, w_dia, validPoints)
         x = new_node[0]
         y = new_node[1]
         if (x, y) in validPoints:
-            adjNodes.append((new_node, cost))
+            adjNodes.append((new_node, move, cost))
     return adjNodes
 
 
 def updateNode(new_node, curr_node, node_cost, queue, parent_map, cost, goal,
-               thresh):
+               thresh, new_move):
     """
     Definition
     ---
@@ -89,22 +92,21 @@ def updateNode(new_node, curr_node, node_cost, queue, parent_map, cost, goal,
     queue : priority queue of nodes to check
     parent_map : dict of nodes mapped to parent node_cost
     """
-    dist = abs(np.linalg.norm(np.asarray(
-        new_node[0:2]) - np.asarray(goal[0:2])))
+    dist = math.sqrt(
+        math.pow(new_node[0]-goal[0], 2) + math.pow(new_node[1]-goal[1], 2))
     new_cost = node_cost[curr_node] + cost + dist
 
     temp_cost = node_cost.get(new_node)
     if not temp_cost or (temp_cost > new_cost):
         node_cost[new_node] = new_cost
-        parent_map[new_node[0:2]] = curr_node[0:2]
+        parent_map[new_node] = (curr_node, new_move)
         heap.heappush(queue, (new_cost, new_node))
-    if abs(np.linalg.norm(np.asarray(goal[0:2])
-                          - np.asarray(new_node[0:2]))) < thresh:
+    if dist < thresh:
         return True, node_cost, queue, parent_map
     return False, node_cost, queue, parent_map
 
 
-def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
+def astar(start, goal, validPoints, clearance, step, thresh, moves, radius,
           w_dia):
     """
     Definition
@@ -128,16 +130,14 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
     closed : list of all the explored nodes
     """
     closed = []
+    thresholded = set()
     queue = []
     node_cost = {}
     parent_map = {}
     reached = False
 
-    moves = [(rpm[0], 0), (0, rpm[0]), (rpm[0], rpm[0]), (rpm[1], 0),
-             (0, rpm[1]), (rpm[1], rpm[0]), (rpm[0], rpm[1]), (rpm[1], rpm[1])]
-
-    if abs(np.linalg.norm(np.asarray(goal[0:2])
-                          - np.asarray(start[0:2]))) < thresh:
+    if math.sqrt(math.pow(start[0]-goal[0], 2)
+                 + math.pow(start[1]-goal[1], 2)) < thresh:
         reached = True
         parent_map[goal] = start[0:2]
 
@@ -145,23 +145,33 @@ def astar(start, goal, validPoints, clearance, step, thresh, rpm, radius,
     heap.heappush(queue, (0, start))
     while not reached and queue:
         curr_cost, curr_node = heap.heappop(queue)
-        if curr_node[0:2] in closed:
+        if visitedNode(thresholded, curr_node, thresh):
             continue
-        closed.append(curr_node[0:2])
+        closed.append(curr_node)
+        thresholded.add((curr_node[0]//thresh, curr_node[1]//thresh))
         adjNodes = getAdjNodes(curr_node, validPoints, clearance, step, moves,
                                radius, w_dia)
-        for new_node, cost in adjNodes:
-            if new_node[0:2] in closed:
+        for new_node, new_move, cost in adjNodes:
+            if visitedNode(thresholded, new_node, thresh):
                 continue
             flag, node_cost, queue, parent_map = updateNode(
                 new_node, curr_node, node_cost, queue, parent_map, cost,
-                goal, thresh)
+                goal, thresh, new_move)
             print('checking for node: ', new_node[0:2])
             if flag:
-                closed.append(new_node[0:2])
+                closed.append(new_node)
+                thresholded.add((curr_node[0]//thresh, curr_node[1]//thresh))
                 reached = True
                 break
     return reached, parent_map, closed
+
+
+def visitedNode(thresholded, curr_node, thresh):
+    x = curr_node[0]//thresh
+    y = curr_node[1]//thresh
+    if (x, y) in thresholded:
+        return True
+    return False
 
 
 def getPath(parent_map, start, goal, closed):
@@ -182,17 +192,17 @@ def getPath(parent_map, start, goal, closed):
     path: list of all the points from starting to goal position
     """
     curr_node = closed[-1]
-    parent_node = parent_map[curr_node]
-    path = [curr_node]
-    while not parent_node == start[0:2]:
+    path = [(curr_node, [0, 0])]
+    while not curr_node[0:2] == start[0:2]:
+        (parent_node, move) = parent_map[curr_node]
+        path.append((parent_node, move))
         curr_node = parent_node
-        parent_node = parent_map[curr_node]
-        path.append(curr_node)
-    path.append(start[0:2])
+    path.append(((start[0], start[1], 0), [0, 0]))
     return path[::-1]
 
 
-def animate(map_len, map_bre, validPoints, closed, path, parent_map):
+def animate(map_len, map_bre, validPoints, closed, path, parent_map, moves,
+            w_dia, radius, step):
     """
     Definition
     ---
@@ -212,25 +222,52 @@ def animate(map_len, map_bre, validPoints, closed, path, parent_map):
     resize = (800, 800)
     for point in validPoints:
         map_frame[map_bre - point[1], point[0]] = [255, 255, 255]
-    cv2.circle(map_frame, (path[-1][0], map_bre
-               - path[-1][1]), 2, [0, 0, 255], -1)
-    cv2.circle(map_frame, (path[0][0], map_bre
-               - path[0][1]), 2, [0, 255, 0], -1)
+    cv2.circle(map_frame, (path[-1][0][0], map_bre
+               - path[-1][0][1]), 4, [0, 0, 255], -1)
+    cv2.circle(map_frame, (path[0][0][0], map_bre
+               - path[0][0][1]), 4, [0, 255, 0], -1)
     for point in closed:
-        if(point == path[0]):
+        if point == path[-1][0]:
             continue
-        parent = parent_map[point]
-        cv2.line(map_frame, (point[0], map_bre - point[1]),
-                 (parent[0], map_bre - parent[1]), [255, 0, 0], 1)
+        for move in moves:
+            Xs, Ys = curve_points(point, move, radius,
+                                  w_dia, step, map_frame, validPoints)
+            for i in range(1, len(Xs)):
+                cv2.line(map_frame, (Xs[i], map_bre - Ys[i]),
+                         (Xs[i-1], map_bre - Ys[i-1]), [255, 0, 0], 2)
         cv2.imshow('map_frame', cv2.resize(map_frame, resize))
         cv2.waitKey(1)
-    for point in path:
-        if(point == path[0]):
+    for point, move in path:
+        if(point == path[0][0]):
             continue
-        parent = parent_map[point]
-        cv2.line(map_frame, (point[0], map_bre - point[1]),
-                 (parent[0], map_bre - parent[1]), [0, 255, 0], 1)
+        Xs, Ys = curve_points(point, move, radius,
+                              w_dia, step, map_frame, validPoints)
+        for i in range(1, len(Xs)):
+            cv2.line(map_frame, (Xs[i], map_bre - Ys[i]),
+                     (Xs[i-1], map_bre - Ys[i-1]), [0, 0, 255], 4)
         cv2.imshow('map_frame', cv2.resize(map_frame, resize))
         cv2.waitKey(1)
     print('done, press any key to exit..')
     cv2.waitKey(0)
+
+
+def curve_points(curr_node, move, radius, w_dia, step, map_frame, validPoints):
+    t = 0
+    dt = 0.1
+    Xn = curr_node[0]
+    Yn = curr_node[1]
+    UL = move[0]
+    UR = move[1]
+    Thetan = 3.14 * curr_node[2] / 180
+    Xs = []
+    Ys = []
+    while t < step:
+        t = t + dt
+        Xs.append(round(Xn))
+        Ys.append(round(Yn))
+        Xn += 0.5*radius * (UL + UR) * math.cos(Thetan) * dt
+        Yn += 0.5*radius * (UL + UR) * math.sin(Thetan) * dt
+        if (round(Xn), round(Yn)) not in validPoints:
+            return [], []
+        Thetan += (radius / w_dia) * (UR - UL) * dt
+    return Xs, Ys

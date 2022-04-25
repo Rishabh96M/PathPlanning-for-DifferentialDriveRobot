@@ -16,10 +16,11 @@ def listOfValidPoints(radius, clearance):
     ---
     validPoints : set of all the valid points
     """
+    d = radius + clearance
     map_len = 1000
     map_bre = 1000
     validPoints = set()
-    d = radius + clearance
+
     # Defining Circle 1
     xc1 = 200
     yc1 = 200
@@ -44,8 +45,8 @@ def listOfValidPoints(radius, clearance):
     y6 = 400 + d
     y5 = 200 - d
 
-    for x in range(int(d), map_len + 1 - int(d)):
-        for y in range(int(d), map_bre + 1 - int(d)):
+    for x in range(round(d), map_len + 1 - round(d)):
+        for y in range(round(d), map_bre + 1 - round(d)):
             if ((x - xc1)**2 + (y - yc1)**2) <= rc1**2:
                 continue
             if ((x - xc2)**2 + (y - yc2)**2) <= rc2**2:
